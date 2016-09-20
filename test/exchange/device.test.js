@@ -1,29 +1,27 @@
 var chai = require('chai')
-  , code = require('../../lib/middleware/code');
+  , device = require('../../lib/exchange/device');
 
 
-describe('middleware.code', function() {
+describe('exchange.device', function() {
   
-  it('should be named code', function() {
-    expect(code(function(){}).name).to.equal('code');
+  it('should be named device', function() {
+    expect(device(function(){}).name).to.equal('device');
   });
   
-  describe('issuing a user code', function() {
+  describe('issuing an access token', function() {
     var response, err;
 
     before(function(done) {
-      function issue(client, scope, done) {
+      function issue(client, code, done) {
         if (client.id !== '812741506391-h38jh0j4fv0ce1krdkiq0hfvt6n5amrf.apps.googleusercontent.com') { return done(new Error('incorrect client argument')); }
-        if (scope.length !== 2) { return done(new Error('incorrect scope argument')); }
-        if (scope[0] !== 'email') { return done(new Error('incorrect scope argument')); }
-        if (scope[1] !== 'profile') { return done(new Error('incorrect scope argument')); }
-        return done(null, '4/4-GMMhmHCXhWEzkobqIHGG_EnNYYsAkukHspeYUk9E8', 'WWWWWWWWWWWWWWW', 'https://www.google.com/device');
+        if (code !== '4/4-GMMhmHCXhWEzkobqIHGG_EnNYYsAkukHspeYUk9E8') { return done(new Error('incorrect code argument')); }
+        return done(null, 'ya29.AHES6ZSuY8f6WFLswSv0HELP2J4cCvFSj-8GiZM0Pr6cgXU');
       }
       
-      chai.connect.use(code(issue))
+      chai.connect.use(device(issue))
         .req(function(req) {
           req.user = { id: '812741506391-h38jh0j4fv0ce1krdkiq0hfvt6n5amrf.apps.googleusercontent.com', name: 'Example App' };
-          req.body = { scope: 'email profile' };
+          req.body = { code: '4/4-GMMhmHCXhWEzkobqIHGG_EnNYYsAkukHspeYUk9E8' };
         })
         .end(function(res) {
           response = res;
@@ -40,29 +38,28 @@ describe('middleware.code', function() {
     it('should respond with headers', function() {
       expect(response.getHeader('Content-Type')).to.equal('application/json');
       expect(response.getHeader('Cache-Control')).to.equal('no-store');
+      expect(response.getHeader('Pragma')).to.equal('no-cache');
     });
     
     it('should respond with body', function() {
-      expect(response.body).to.equal('{"device_code":"4/4-GMMhmHCXhWEzkobqIHGG_EnNYYsAkukHspeYUk9E8","user_code":"WWWWWWWWWWWWWWW","verification_url":"https://www.google.com/device"}');
+      expect(response.body).to.equal('{"access_token":"ya29.AHES6ZSuY8f6WFLswSv0HELP2J4cCvFSj-8GiZM0Pr6cgXU","token_type":"Bearer"}');
     });
   });
   
-  describe('issuing a user code with expires in and interval', function() {
+  describe('issuing an access token and refresh token', function() {
     var response, err;
 
     before(function(done) {
-      function issue(client, scope, done) {
+      function issue(client, code, done) {
         if (client.id !== '812741506391-h38jh0j4fv0ce1krdkiq0hfvt6n5amrf.apps.googleusercontent.com') { return done(new Error('incorrect client argument')); }
-        if (scope.length !== 2) { return done(new Error('incorrect scope argument')); }
-        if (scope[0] !== 'email') { return done(new Error('incorrect scope argument')); }
-        if (scope[1] !== 'profile') { return done(new Error('incorrect scope argument')); }
-        return done(null, '4/4-GMMhmHCXhWEzkobqIHGG_EnNYYsAkukHspeYUk9E8', 'GQVQ-JKEC', 'https://www.google.com/device', { expires_in: 1800, interval: 5 });
+        if (code !== '4/4-GMMhmHCXhWEzkobqIHGG_EnNYYsAkukHspeYUk9E8') { return done(new Error('incorrect code argument')); }
+        return done(null, '2YotnFZFEjr1zCsicMWpAA', '1/551G1yXUqgkDGnkfFk6ZbjMLMDIMxo3JFc8lY8CAR-Q');
       }
       
-      chai.connect.use(code(issue))
+      chai.connect.use(device(issue))
         .req(function(req) {
           req.user = { id: '812741506391-h38jh0j4fv0ce1krdkiq0hfvt6n5amrf.apps.googleusercontent.com', name: 'Example App' };
-          req.body = { scope: 'email profile' };
+          req.body = { code: '4/4-GMMhmHCXhWEzkobqIHGG_EnNYYsAkukHspeYUk9E8' };
         })
         .end(function(res) {
           response = res;
@@ -79,11 +76,12 @@ describe('middleware.code', function() {
     it('should respond with headers', function() {
       expect(response.getHeader('Content-Type')).to.equal('application/json');
       expect(response.getHeader('Cache-Control')).to.equal('no-store');
+      expect(response.getHeader('Pragma')).to.equal('no-cache');
     });
     
     it('should respond with body', function() {
-      expect(response.body).to.equal('{"device_code":"4/4-GMMhmHCXhWEzkobqIHGG_EnNYYsAkukHspeYUk9E8","user_code":"GQVQ-JKEC","verification_url":"https://www.google.com/device","expires_in":1800,"interval":5}');
+      expect(response.body).to.equal('{"access_token":"2YotnFZFEjr1zCsicMWpAA","refresh_token":"1/551G1yXUqgkDGnkfFk6ZbjMLMDIMxo3JFc8lY8CAR-Q","token_type":"Bearer"}');
     });
   });
   
-});
+})
